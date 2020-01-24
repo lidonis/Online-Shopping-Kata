@@ -33,7 +33,7 @@ public class Cart implements ModelObject {
     }
 
     private String displayItems(List<Item> items) {
-        StringBuffer itemDisplay = new StringBuffer("\n");
+        StringBuilder itemDisplay = new StringBuilder("\n");
         for (Item item : items) {
             itemDisplay.append(item.toString());
             itemDisplay.append("\n");
@@ -48,5 +48,13 @@ public class Cart implements ModelObject {
 
     public Collection<Item> getUnavailableItems() {
         return unavailableItems;
+    }
+
+    long getWeight() {
+        return getItems().stream().filter(this::isItemAvailable).mapToLong(Item::getWeight).sum();
+    }
+
+    private boolean isItemAvailable(Item item) {
+        return !getUnavailableItems().contains(item);
     }
 }

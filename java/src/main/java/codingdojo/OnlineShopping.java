@@ -15,84 +15,98 @@ import java.util.ArrayList;
 public class OnlineShopping {
 
     private Session session;
+    private Cart cart;
+    private DeliveryInformation deliveryInformation;
+    private LocationService locationService;
+    private Store currentStore;
 
     public OnlineShopping(Session session) {
         this.session = session;
+        cart = (Cart) session.get("CART");
+        deliveryInformation = (DeliveryInformation) session.get("DELIVERY_INFO");
+        locationService = ((LocationService) session.get("LOCATION_SERVICE"));
+        currentStore = (Store) session.get("STORE");
     }
 
     /**
      * This method is called when the user changes the
      * store they are shopping at in the online shopping
      * website.
-     *
      */
     public void switchStore(Store storeToSwitchTo) {
-        Cart cart = (Cart) session.get("CART");
-        DeliveryInformation deliveryInformation = (DeliveryInformation) session.get("DELIVERY_INFO");
-        if (storeToSwitchTo == null) {
-            if (cart != null) {
-                for (Item item : cart.getItems()) {
-                    if ("EVENT".equals(item.getType())) {
-                        cart.markAsUnavailable(item);
-                    }
-                }
-
-            }
-            if (deliveryInformation != null) {
-                deliveryInformation.setType("SHIPPING");
-                deliveryInformation.setPickupLocation(null);
-            }
-        } else {
-            if (cart != null) {
-                ArrayList<Item> newItems = new ArrayList<>();
-                long weight = 0;
-                for (Item item : cart.getItems()) {
-                    if ("EVENT".equals(item.getType())) {
-                        if (storeToSwitchTo.hasItem(item)) {
-                            cart.markAsUnavailable(item);
-                            newItems.add(storeToSwitchTo.getItem(item.getName()));
-                        } else {
-                            cart.markAsUnavailable(item);
-                        }
-                    } else if (!storeToSwitchTo.hasItem(item)) {
-                        cart.markAsUnavailable(item);
-                    }
-                    weight += item.getWeight();
-                }
-                for (Item item: cart.getUnavailableItems()) {
-                    weight -= item.getWeight();
-                }
-
-                Store currentStore = (Store) session.get("STORE");
-                if (deliveryInformation != null
-                        && deliveryInformation.getType() != null
-                        && "HOME_DELIVERY".equals(deliveryInformation.getType())
-                        && deliveryInformation.getDeliveryAddress() != null) {
-                    if (!((LocationService) session.get("LOCATION_SERVICE")).isWithinDeliveryRange(storeToSwitchTo, deliveryInformation.getDeliveryAddress())) {
-                        deliveryInformation.setType("PICKUP");
-                        deliveryInformation.setPickupLocation(currentStore);
-                    } else {
-                        deliveryInformation.setTotalWeight(weight);
-                        deliveryInformation.setPickupLocation(storeToSwitchTo);
-                    }
-                } else {
-                    if (deliveryInformation != null
-                            && deliveryInformation.getDeliveryAddress() != null) {
-                        if (((LocationService) session.get("LOCATION_SERVICE")).isWithinDeliveryRange(storeToSwitchTo, deliveryInformation.getDeliveryAddress())) {
-                            deliveryInformation.setType("HOME_DELIVERY");
-                            deliveryInformation.setTotalWeight(weight);
-                            deliveryInformation.setPickupLocation(storeToSwitchTo);
-
-                        }
-                    }
-                }
-                for (Item item : newItems) {
-                    cart.addItem(item);
-                }
-            }
+        if (cart != null) {
+            modifyCart(storeToSwitchTo);
+            modifyDeliveryInfo(storeToSwitchTo);
         }
         session.put("STORE", storeToSwitchTo);
         session.saveAll();
+    }
+
+    private void modifyDeliveryInfo(Store storeToSwitchTo) {
+        if (storeToSwitchTo == null) {
+            centralWarehouse();
+        } else {
+            store(storeToSwitchTo);
+        }
+    }
+
+    private void store(Store storeToSwitchTo) {
+        if (isDeliveryInfoSpecified() && deliveryInformation.isDeliveryAddressSpecified()) {
+            if (isWithinDeliveryRange(storeToSwitchTo)) {
+                deliveryInformation.setType("HOME_DELIVERY");
+                deliveryInformation.setTotalWeight(cart.getWeight());
+                deliveryInformation.setPickupLocation(storeToSwitchTo);
+            } else if ("HOME_DELIVERY".equals(deliveryInformation.getType())) {
+                deliveryInformation.setType("PICKUP");
+                deliveryInformation.setPickupLocation(currentStore);
+            }
+        }
+    }
+
+    private void centralWarehouse() {
+        if (isDeliveryInfoSpecified()) {
+            deliveryInformation.setType("SHIPPING");
+            deliveryInformation.setPickupLocation(null);
+        }
+    }
+
+    private void modifyCart(Store storeToSwitchTo) {
+        if (storeToSwitchTo == null) {
+            changeCartWarehouse();
+        } else {
+            changeCartStore(storeToSwitchTo);
+        }
+    }
+
+    private boolean isDeliveryInfoSpecified() {
+        return deliveryInformation != null;
+    }
+
+    private void changeCartWarehouse() {
+        for (Item item : cart.getItems()) {
+            if ("EVENT".equals(item.getType())) {
+                cart.markAsUnavailable(item);
+            }
+        }
+    }
+
+    private void changeCartStore(Store storeToSwitchTo) {
+        ArrayList<Item> newItems = new ArrayList<>();
+        for (Item item : cart.getItems()) {
+            if ("EVENT".equals(item.getType())) {
+                cart.markAsUnavailable(item);
+                if (storeToSwitchTo.hasItem(item)) {
+                    newItems.add(storeToSwitchTo.getItem(item.getName()));
+                }
+            } else if (!storeToSwitchTo.hasItem(item)) {
+                cart.markAsUnavailable(item);
+            }
+        }
+        cart.addItems(newItems);
+    }
+
+    private boolean isWithinDeliveryRange(Store storeToSwitchTo) {
+        return locationService.isWithinDeliveryRange(storeToSwitchTo, deliveryInformation.getDeliveryAddress());
     }
 
     @Override

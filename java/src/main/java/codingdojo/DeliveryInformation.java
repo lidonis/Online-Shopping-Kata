@@ -56,4 +56,7 @@ public class DeliveryInformation implements ModelObject {
         throw new UnsupportedOperationException("missing from this exercise - shouldn't be called from a unit test");
     }
 
+    boolean isDeliveryAddressSpecified() {
+        return getDeliveryAddress() != null;
+    }
 }
