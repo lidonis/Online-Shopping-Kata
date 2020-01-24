@@ -1,7 +1,5 @@
 package codingdojo;
 
-import java.util.ArrayList;
-
 /**
  * The online shopping company owns a chain of Stores selling
  * makeup and beauty products.
@@ -35,78 +33,13 @@ public class OnlineShopping {
      */
     public void switchStore(Store storeToSwitchTo) {
         if (cart != null) {
-            modifyCart(storeToSwitchTo);
-            modifyDeliveryInfo(storeToSwitchTo);
+            cart.modifyCart(storeToSwitchTo);
+            if(deliveryInformation != null) {
+                deliveryInformation.modifyDeliveryInfo(storeToSwitchTo, locationService, currentStore, cart.getWeight());
+            }
         }
         session.put("STORE", storeToSwitchTo);
         session.saveAll();
-    }
-
-    private void modifyDeliveryInfo(Store storeToSwitchTo) {
-        if (storeToSwitchTo == null) {
-            centralWarehouse();
-        } else {
-            store(storeToSwitchTo);
-        }
-    }
-
-    private void store(Store storeToSwitchTo) {
-        if (isDeliveryInfoSpecified() && deliveryInformation.isDeliveryAddressSpecified()) {
-            if (isWithinDeliveryRange(storeToSwitchTo)) {
-                deliveryInformation.setType("HOME_DELIVERY");
-                deliveryInformation.setTotalWeight(cart.getWeight());
-                deliveryInformation.setPickupLocation(storeToSwitchTo);
-            } else if ("HOME_DELIVERY".equals(deliveryInformation.getType())) {
-                deliveryInformation.setType("PICKUP");
-                deliveryInformation.setPickupLocation(currentStore);
-            }
-        }
-    }
-
-    private void centralWarehouse() {
-        if (isDeliveryInfoSpecified()) {
-            deliveryInformation.setType("SHIPPING");
-            deliveryInformation.setPickupLocation(null);
-        }
-    }
-
-    private void modifyCart(Store storeToSwitchTo) {
-        if (storeToSwitchTo == null) {
-            changeCartWarehouse();
-        } else {
-            changeCartStore(storeToSwitchTo);
-        }
-    }
-
-    private boolean isDeliveryInfoSpecified() {
-        return deliveryInformation != null;
-    }
-
-    private void changeCartWarehouse() {
-        for (Item item : cart.getItems()) {
-            if ("EVENT".equals(item.getType())) {
-                cart.markAsUnavailable(item);
-            }
-        }
-    }
-
-    private void changeCartStore(Store storeToSwitchTo) {
-        ArrayList<Item> newItems = new ArrayList<>();
-        for (Item item : cart.getItems()) {
-            if ("EVENT".equals(item.getType())) {
-                cart.markAsUnavailable(item);
-                if (storeToSwitchTo.hasItem(item)) {
-                    newItems.add(storeToSwitchTo.getItem(item.getName()));
-                }
-            } else if (!storeToSwitchTo.hasItem(item)) {
-                cart.markAsUnavailable(item);
-            }
-        }
-        cart.addItems(newItems);
-    }
-
-    private boolean isWithinDeliveryRange(Store storeToSwitchTo) {
-        return locationService.isWithinDeliveryRange(storeToSwitchTo, deliveryInformation.getDeliveryAddress());
     }
 
     @Override
