@@ -60,21 +60,23 @@ public class DeliveryInformation implements ModelObject {
         return deliveryAddress != null;
     }
 
-    void modifyDeliveryInfo(Store storeToSwitchTo, LocationService locationService, Store currentStore, long cartWeight) {
-        if (storeToSwitchTo == null) {
-            setType("SHIPPING");
-            setPickupLocation(null);
-        } else {
-            if (isDeliveryAddressSpecified()) {
-                if (locationService.isWithinDeliveryRange(storeToSwitchTo, deliveryAddress)) {
-                    setType("HOME_DELIVERY");
-                    setTotalWeight(cartWeight);
-                    setPickupLocation(storeToSwitchTo);
-                } else if ("HOME_DELIVERY".equals(type)) {
-                    setType("PICKUP");
-                    setPickupLocation(currentStore);
-                }
-            }
-        }
+    public void switchToShipping() {
+        setType("SHIPPING");
+        setPickupLocation(null);
+    }
+
+    public void switchToHomeDelivery(Store storeToSwitchTo, long cartWeight) {
+        setType("HOME_DELIVERY");
+        setTotalWeight(cartWeight);
+        setPickupLocation(storeToSwitchTo);
+    }
+
+    public void switchToPickUp(Store currentStore) {
+        setType("PICKUP");
+        setPickupLocation(currentStore);
+    }
+
+    boolean isHomeDelivery() {
+        return "HOME_DELIVERY".equals(getType());
     }
 }
