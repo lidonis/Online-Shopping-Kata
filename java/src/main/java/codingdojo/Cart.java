@@ -58,7 +58,7 @@ public class Cart implements ModelObject {
         return !getUnavailableItems().contains(item);
     }
 
-    void modifyCart(Store storeToSwitchTo) {
+    void updateCart(Store storeToSwitchTo) {
         if (storeToSwitchTo == null) {
             for (Item item : getItems()) {
                 if ("EVENT".equals(item.getType())) {

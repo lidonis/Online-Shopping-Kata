@@ -8,7 +8,7 @@ public class DeliveryService {
     this.locationService = locationService;
   }
 
-  void modifyDeliveryInfo(DeliveryInformation deliveryInformation, Store storeToSwitchTo,
+  void updateDeliveryInfo(DeliveryInformation deliveryInformation, Store storeToSwitchTo,
       Store currentStore, long cartWeight) {
     if (isCentralShipping(storeToSwitchTo)) {
       deliveryInformation.switchToShipping();
@@ -27,9 +27,8 @@ public class DeliveryService {
     return storeToSwitchTo == null;
   }
 
-  private boolean canDoHomeDelivery(DeliveryInformation deliveryInformation,
-      Store storeToSwitchTo) {
-    return locationService.isWithinDeliveryRange(storeToSwitchTo,
-        deliveryInformation.getDeliveryAddress());
+  private boolean canDoHomeDelivery(DeliveryInformation deliveryInfo, Store storeToSwitchTo) {
+    return locationService
+        .isWithinDeliveryRange(storeToSwitchTo, deliveryInfo.getDeliveryAddress());
   }
 }

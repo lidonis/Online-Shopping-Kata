@@ -11,16 +11,10 @@ package codingdojo;
 public class OnlineShopping {
 
   private final Session session;
-  private final Cart cart;
-  private final DeliveryInformation deliveryInformation;
-  private final Store currentStore;
   private final DeliveryService deliveryService;
 
   public OnlineShopping(Session session) {
     this.session = session;
-    cart = (Cart) session.get("CART");
-    deliveryInformation = (DeliveryInformation) session.get("DELIVERY_INFO");
-    currentStore = (Store) session.get("STORE");
     deliveryService = new DeliveryService(((LocationService) session.get("LOCATION_SERVICE")));
   }
 
@@ -29,15 +23,20 @@ public class OnlineShopping {
    * shopping website.
    */
   public void switchStore(Store storeToSwitchTo) {
-    if (cart != null) {
-      cart.modifyCart(storeToSwitchTo);
-      if (deliveryInformation != null) {
-        deliveryService.modifyDeliveryInfo(deliveryInformation, storeToSwitchTo, currentStore,
-            cart.getWeight());
-      }
-    }
-    session.put("STORE", storeToSwitchTo);
+    Cart cart = session.getCart(session);
+    cart.updateCart(storeToSwitchTo);
+    updateDeliveryInfo(storeToSwitchTo, cart.getWeight());
+    session.updateStore(storeToSwitchTo);
     session.saveAll();
+  }
+
+  private void updateDeliveryInfo(Store storeToSwitchTo, long cartWeight) {
+    DeliveryInformation deliveryInfo = session.getDeliveryInfo(session);
+    if (deliveryInfo != null) {
+      deliveryService.updateDeliveryInfo(deliveryInfo, storeToSwitchTo,
+          session.getStore(session),
+          cartWeight);
+    }
   }
 
   @Override
