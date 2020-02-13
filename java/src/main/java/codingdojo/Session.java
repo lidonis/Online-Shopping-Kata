@@ -51,4 +51,8 @@ public class Session {
                 sessionContents +
                 "}";
     }
+
+  LocationService getLocationService() {
+    return (LocationService) get("LOCATION_SERVICE");
+  }
 }
