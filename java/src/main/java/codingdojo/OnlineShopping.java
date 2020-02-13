@@ -32,11 +32,9 @@ public class OnlineShopping {
 
   private void updateDeliveryInfo(Store storeToSwitchTo, long cartWeight) {
     DeliveryInformation deliveryInfo = session.getDeliveryInfo(session);
-    if (deliveryInfo != null) {
       deliveryService.updateDeliveryInfo(deliveryInfo, storeToSwitchTo,
           session.getStore(session),
           cartWeight);
-    }
   }
 
   @Override

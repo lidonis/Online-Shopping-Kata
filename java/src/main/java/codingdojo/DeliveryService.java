@@ -10,6 +10,9 @@ public class DeliveryService {
 
   void updateDeliveryInfo(DeliveryInformation deliveryInformation, Store storeToSwitchTo,
       Store currentStore, long cartWeight) {
+    if(deliveryInformation == null){
+      return;
+    }
     if (isCentralShipping(storeToSwitchTo)) {
       deliveryInformation.switchToShipping();
     } else {
